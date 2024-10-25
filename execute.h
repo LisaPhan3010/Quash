@@ -6,6 +6,6 @@
 
 // Function prototypes for executing commands
 void execCmd(const ParsedCommand* command);  // Executes a parsed command
-bool is_background_job(const ParsedCommand* command);  // Checks if the command is a background job
+//bool is_background_job(const ParsedCommand* command);  // Checks if the command is a background job
 
 #endif // End of EXECUTE_H
