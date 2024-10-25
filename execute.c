@@ -67,42 +67,33 @@ void execCmd(const ParsedCommand* command) {
         perror("Fork failed"); // Print fork error message
     } 
     else { //Sophia's code
-        // Parent process
         if (command->background) {
-            // Background execution: do not wait
+            // Background execution
             if (jobCount < MAX_JOBS) {
                 jobs[jobCount].job_id = jobCount + 1;
                 jobs[jobCount].pid = pid;
-                strncpy(jobs[jobCount].command, command->args[0], sizeof(jobs[jobCount].command) - 1);
-                jobs[jobCount].command[sizeof(jobs[jobCount].command) - 1] = '\0'; // ensure null-termination
+
+                // Build the full command string from command->args
+                char fullCommand[256]; 
+                fullCommand[0] = '\0'; // Initialize the buffer as an empty string
+
+                for (int i = 0; command->args[i] != NULL; i++) {
+                    strncat(fullCommand, command->args[i], sizeof(fullCommand) - strlen(fullCommand) - 1);
+                    strncat(fullCommand, " ", sizeof(fullCommand) - strlen(fullCommand) - 1); // Add space between arguments
+                }
+                fullCommand[strlen(fullCommand) - 1] = '\0'; // Remove the trailing space
+
+                // Store the full command in the jobs array
+                strncpy(jobs[jobCount].command, fullCommand, sizeof(jobs[jobCount].command) - 1);
+                jobs[jobCount].command[sizeof(jobs[jobCount].command) - 1] = '\0'; // Ensure null-termination
+
                 printf("Background job started: [%d] %d %s &\n", jobs[jobCount].job_id, jobs[jobCount].pid, jobs[jobCount].command);
                 jobCount++;
             } else {
                 fprintf(stderr, "Maximum number of background jobs reached.\n");
             }
         } else {
-            waitpid(pid, NULL, 0); // wait until the child process is finished
+            waitpid(pid, NULL, 0); // Wait until the child process is finished
         }
     }
 }
-//sophia's code
-// Handle completed background jobs
-void handleCompletedJobs() {
-    int status;
-    pid_t pid;
-
-    while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
-        // Find the job in the jobs array
-        for (int i = 0; i < jobCount; i++) {
-            if (jobs[i].pid == pid) {
-                printf("Completed: [%d] %d %s &\n", jobs[i].job_id, jobs[i].pid, jobs[i].command);
-                // Remove the job from the array by shifting others
-                for (int j = i; j < jobCount - 1; j++) {
-                    jobs[j] = jobs[j + 1];
-                }
-                jobCount--;
-                break;
-            }
-        }
-    }
-} 
