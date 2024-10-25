@@ -8,7 +8,8 @@
 typedef struct {
     pid_t pid;
     char command[1024];
-    int status; 
+    int status;
+    int job_id;
 } BackgroundJob;
 
 bool cdCmd(const ParsedCommand* command); //change directory command
