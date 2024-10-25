@@ -16,6 +16,7 @@ bool pwdCmd(const ParsedCommand* command); //check current working directory
 bool echoCmd(const ParsedCommand* command); //print stdout
 bool exportCmd(const ParsedCommand* command); //set up enviroment variables
 bool jobsCmd(const ParsedCommand* command); //list of background jobs
+bool killCmd(const ParsedCommand* command);
 bool quitCmd(const ParsedCommand* command); //quit or exit quash
 
 //check if a command is a builtin command
