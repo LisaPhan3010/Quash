@@ -15,20 +15,35 @@
 BackgroundJob jobs[MAX_JOBS];
 int jobCount = 0;
 
-// Change to the target directory or the home directory if no argument is given
 bool cdCmd(const ParsedCommand* command) {
-    if (command->args[1] == NULL) { // No target directory provided
-        char* home = getenv("HOME");
-        if (home != NULL) {
-            if (chdir(home) != 0) {
-                perror("cd"); // Print error message
-            }
-        } else {
+    const char *targetDir;
+    
+    // Determine the target directory: either the HOME variable or the provided argument
+    if (command->args[1] == NULL) { 
+        targetDir = getenv("HOME");
+        if (targetDir == NULL) {
             fprintf(stderr, "cd: invalid environment variable\n");
+            return true;
         }
-    } else if (chdir(command->args[1]) != 0) { // Change to target directory
-        perror("cd"); // Print error message if changing fails
+    } else {
+        targetDir = command->args[1];
     }
+
+    // change the directory
+    if (chdir(targetDir) != 0) {
+        perror("cd");  
+        return true;
+    }
+
+    // Update the PWD environment variable to reflect the new working directory
+    char *newDir = getcwd(NULL, 0);  
+    if (newDir != NULL) {
+        setenv("PWD", newDir, 1);  
+        free(newDir);  
+    } else {
+        perror("cd");  
+    }
+
     return true;
 }
 
