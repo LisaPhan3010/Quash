@@ -59,58 +59,39 @@ bool pwdCmd(const ParsedCommand* command) {
 }
 
 // Print arguments or environment variable values
-// Print arguments or environment variable values
 bool echoCmd(const ParsedCommand* command) {
-    for (int i = 1; command->args[i] != NULL; ++i) { // Loop through arguments starting from index 1
+    // Backup the original stdout file descriptor
+    int original_stdout = dup(STDOUT_FILENO);
+
+    // Handle output redirection if specified
+    if (command->outfile != NULL) {
+        int fd_out = open(command->outfile, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+        if (fd_out < 0) {
+            perror("Error opening output file");
+            return true;
+        }
+        dup2(fd_out, STDOUT_FILENO); // Redirect stdout to file
+        close(fd_out);
+    }
+
+    // Print each argument of echo command
+    for (int i = 1; command->args[i] != NULL; ++i) {
         if (command->args[i][0] == '$') {
+            // Environment variable handling
             char* env_var = getenv(command->args[i] + 1);
             if (env_var != NULL) {
-                printf("%s ", env_var); // Print the value of the environment variable
+                printf("%s ", env_var);
             }
         } else {
-            printf("%s ", command->args[i]); // Print the argument directly
+            printf("%s ", command->args[i]);
         }
     }
-    printf("\n"); // Print newline after all arguments
+    printf("\n");
 
-    pid_t pid = fork(); // Fork a new process
-    if (pid == 0) { // Child process
-        // Handle input redirection
-        if (command->infile != NULL) {
-            int fd_in = open(command->infile, O_RDONLY); // Open the input file for reading
-            if (fd_in < 0) { // Error handling if the file can't be opened
-                perror("Error opening input file");
-                exit(1);
-            }
-            dup2(fd_in, STDIN_FILENO); // Redirect standard input to the input file
-            close(fd_in); // Close the file descriptor after redirection
-        }
-        // Handle output redirection
-        if (command->outfile != NULL) {
-            FILE *fd_out; 
-            if (command->append) {
-                fd_out = fopen(command->outfile, "a"); // Open for appending
-            } else {
-                fd_out = fopen(command->outfile, "w"); // Open for writing
-            }
-            if (fd_out == NULL) { // Error handling for file opening failure
-                perror("Error opening output file");
-                exit(1); // Terminate the child process
-            }
-            dup2(fileno(fd_out), STDOUT_FILENO); // Redirect standard output to file descriptor
-            fclose(fd_out); // Close file pointer after redirection
-        }
+    // Restore original stdout
+    dup2(original_stdout, STDOUT_FILENO);
+    close(original_stdout);
 
-        // Execute the user command
-        execvp(command->args[0], command->args); // Replace current process with a new process
-        perror("execvp failed"); // Print error message if execvp fails
-        exit(1); // Exit child process
-    } 
-    else if (pid < 0) { // Fork error
-        perror("Fork failed"); // Print fork error message
-    } else { // Parent process
-        waitpid(pid, NULL, 0); // Wait for child process to finish
-    }
     return true;
 }
 
