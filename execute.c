@@ -16,9 +16,6 @@ extern int jobCount;
 
 // Execute parsed command
 void execCmd(const ParsedCommand* command) {
-    if (quitCmd(command)) {
-        exit(0);
-    }
     if (isBuiltin(command)) {
         execBuiltin(command);
         return;
@@ -43,10 +40,10 @@ void execCmd(const ParsedCommand* command) {
         if (command->outfile != NULL) {
             FILE *fd_out; 
             if (command->append) {
-                fd_out = fopen(command->outfile, "append"); // Open the file for appending
+                fd_out = fopen(command->outfile, "a"); // Open the file for appending
                 //file = open(command->outfile, O_WRONLY | O_CREAT | O_APPEND, 0644); // Open for appending
             } else {
-                fd_out = fopen(command->outfile, "write"); // Open the file for writing
+                fd_out = fopen(command->outfile, "w"); // Open the file for writing
                 //file = open(command->outfile, O_WRONLY | O_CREAT | O_TRUNC, 0644); // Open for writing
             }
             if (fd_out < 0) { // Error handling for file opening failure
